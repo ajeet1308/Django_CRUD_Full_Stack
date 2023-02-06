@@ -1,9 +1,9 @@
 from django.urls import path
-from . import views
+from tutorials.views1 import tutorialList, tutorialDetail, tutorialListPublished
 
 urlpatterns = [
-    path('api/tutorials',views.TutorialList.as_view(), name='tutorial-list'),
-    path('api/tutorials/<int:pk>',views.TutorialDetail.as_view(), name='tutorial-detail'),
+    path('api/tutorials',tutorialList.TutorialList.as_view(), name='tutorial-list'),
+    path('api/tutorials/<int:pk>',tutorialDetail.TutorialDetail.as_view(), name='tutorial-detail'),
     # path('api/tutorials/published',views.tutorial_list_published),
-    path('api/tutorials/published',views.TutorialListPublished.as_view(),name='tutorial-list-published'),
+    path('api/tutorials/published',tutorialListPublished.TutorialListPublished.as_view(),name='tutorial-list-published'),
 ]
