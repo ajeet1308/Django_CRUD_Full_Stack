@@ -7,6 +7,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { Button } from "@mui/material";
 import ModalPrimary from "../../components/modal";
+import { TextField } from "@mui/material";
 
 const Customdiv = styled.div`
   height: 400px;
@@ -17,13 +18,30 @@ const Customdiv = styled.div`
   transform: translate(-50%, -50%);
 `;
 
+const WrapperRow = styled.div`
+  display:flex;
+  z-index:2;
+  justify-content:space-between;
+  height: 80px;
+  padding-left: 80px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #ffffff;
+  margin-bottom: 50px;
+  box-shadow: 0 2px 10px -1px rgba(0, 0, 0, 0.1);
+`;
+
 const Home = () => {
   const [data, setData] = useState([]);
   const [open, setOpen] = useState(false);
   const [alertShow, setAlertShow] = useState({ open: false, msg: "" });
   const [cellVal, setCellVal] = useState();
   const [heading, setHeading] = useState();
+  const [searchData, setSearchData] = useState()
+  const [loader,setLoader] = useState(false)
 
+  console.log(searchData)
   const deleteHandler = async (cellValues) => {
     if (confirm("Do you want to delete this data?")) {
       const url =
@@ -48,6 +66,17 @@ const Home = () => {
       }
     }
   };
+
+  const handleSearch = async () => {
+    const url = process.env.REACT_APP_GET_ARTICLE_BY_TITLE + '?title=' + searchData;
+    try {
+      await Services.getByTitle(url).then((response) =>
+        setData(response.data)
+      )
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   const editHandler = (cellValues) => {
     setHeading("Edit Articles");
@@ -86,7 +115,7 @@ const Home = () => {
       try {
         await Services.get(
           process.env.REACT_APP_GET_ALL_PUBLISHED_ARTICLE
-        ).then((response) => setData(response.data));
+        ).then((response) => {setData(response.data); setLoader(false)});
       } catch (err) {
         console.log(err);
       }
@@ -96,31 +125,40 @@ const Home = () => {
 
   return (
     <div>
-      <h1>Below are all your published articles</h1>{" "}
-      <Button
+      <WrapperRow><h1>Published Articles</h1></WrapperRow>
+      <Customdiv>
+        <TextField
+          sx={{ width: "70%", margin: "20px" }}
+          id="outlined-basic"
+          label="Please Enter the Title"
+          variant="outlined"
+          onChange={(e) =>
+            setSearchData(e.target.value)
+          }
+        /> {' '}
+        <Button sx={{margin:"30px"}} variant="contained" onClick={handleSearch}>Search</Button>
+        <DataGrid
+          rows={data}
+          columns={columns}
+          pageSize={5}
+          rowsPerPageOptions={[5]}
+          checkboxSelection={false}
+          loading={loader}
+        />
+        <Button
         variant="contained"
+        sx={{marginTop:"20px", marginLeft:"150px"}}
         onClick={() => {
           setHeading("Add a new Article");
           setOpen(true);
         }}
       >
         Add Articles
-      </Button>
-      <br/><br/>
-      <Button variant="contained" onClick={deleteAllHandler}>
+      </Button> {' '}
+      <Button sx={{marginTop: "20px", marginLeft:"100px"}} variant="contained" onClick={deleteAllHandler}>
         Delete all Articles
       </Button>
-      {data.length > 0 ? (
-        <Customdiv>
-          <DataGrid
-            rows={data}
-            columns={columns}
-            pageSize={5}
-            rowsPerPageOptions={[5]}
-            checkboxSelection={false}
-          />
-        </Customdiv>
-      ) : <h1>No Data Here!</h1>}
+      </Customdiv>
       <ModalPrimary
         data={data}
         setData={setData}

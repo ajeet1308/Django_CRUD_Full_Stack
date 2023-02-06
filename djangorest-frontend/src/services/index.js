@@ -21,4 +21,9 @@ export const Services = {
       },
     }),
   deleteAll: (url) => axios.delete(url),
+  getByTitle: (url) => axios.get(url,{
+    headers: {
+      "Content-Type": "applications/json",
+    },
+  }),
 };
