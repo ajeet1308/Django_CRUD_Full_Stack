@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.core.cache import cache
+import json
+from tutorials.redis_conn import redis_conn
 
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
@@ -7,8 +7,6 @@ from rest_framework import status, generics
 
 from tutorials.models import Tutorial
 from tutorials.serializers import TutorialSerializer
-
-
 
 
 
@@ -26,7 +24,7 @@ class TutorialList(generics.ListAPIView):
             else:
                 return JsonResponse({'message':'That title do not exists'})
             final_serializer = self.serializer_class(tutorials, many=True)
-            cache.set(self.cache_key,final_serializer.data)
+            redis_conn.set(self.cache_key, json.dumps(final_serializer.data))
             return JsonResponse(final_serializer.data,safe=False)
     
         except Exception as e:
@@ -42,7 +40,7 @@ class TutorialList(generics.ListAPIView):
                 serializer.save()
                 final_tutorial_data = self.get_queryset()
                 final_serializer = self.serializer_class(final_tutorial_data, many=True)
-                cache.set(self.cache_key,final_serializer.data)
+                redis_conn.set(self.cache_key, json.dumps(final_serializer.data))
                 return JsonResponse(final_serializer.data, status=status.HTTP_201_CREATED, safe=False)
             return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
@@ -53,7 +51,7 @@ class TutorialList(generics.ListAPIView):
     def delete(self, request, *args, **kwargs):
         try:
             count = self.queryset.delete()
-            cache.delete(self.cache_key) # Deleted the cache
+            redis_conn.delete(self.cache_key) # Deleted the cache
             return JsonResponse({'message':'{} Tutorials were deleted successfully!'.format(count[0])})
         
         except Exception as e:

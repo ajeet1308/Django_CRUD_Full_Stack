@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.core.cache import cache
+import json
+from tutorials.redis_conn import redis_conn
 
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
@@ -7,9 +7,6 @@ from rest_framework import status, generics
 
 from tutorials.models import Tutorial
 from tutorials.serializers import TutorialSerializer
-
-
-
 
 
 
@@ -22,7 +19,7 @@ class TutorialDetail(generics.ListAPIView):
         try:
             tutorial_data = self.queryset.get(pk=kwargs['pk'])
             serializer = self.serializer_class(tutorial_data)
-            cache.set(self.cache_key, serializer.data)
+            redis_conn.set(self.cache_key, json.dumps(serializer.data))
             return JsonResponse(serializer.data)
         except Tutorial.DoesNotExist:
             return JsonResponse({'message':'This article does not exist'})
@@ -35,7 +32,7 @@ class TutorialDetail(generics.ListAPIView):
             count = tutorial_data.delete()
             final_tutorial_data = self.get_queryset()
             serializer = self.serializer_class(final_tutorial_data, many=True)
-            cache.set(self.cache_key, serializer.data)
+            redis_conn.set(self.cache_key, json.dumps(serializer.data))
             return JsonResponse(serializer.data, safe=False)
         
         except Tutorial.DoesNotExist:
@@ -53,7 +50,7 @@ class TutorialDetail(generics.ListAPIView):
                 serializer.save()
                 final_tutorial_data = self.get_queryset()
                 final_serializer = self.serializer_class(final_tutorial_data, many=True)
-                cache.set(self.cache_key,final_serializer.data)
+                redis_conn.set(self.cache_key, json.dumps(final_serializer.data))
                 return JsonResponse(final_serializer.data, safe=False)
             
             return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
