@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.core.cache import cache
 
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
@@ -14,16 +15,18 @@ from tutorials.serializers import TutorialSerializer
 class TutorialList(generics.ListAPIView):
     queryset = Tutorial.objects.all();
     serializer_class = TutorialSerializer
+    cache_key = 'tutorial_list_published'
     
     def get(self, request, *args, **kwargs):
         try:
             tutorial_data = self.get_queryset()
-            title = request.GET.get('title',None)
+            title = request.GET.get('title',None) # this basically get the title that we have in our url parameters
             if title is not None:
                 tutorials = tutorial_data.filter(title__icontains = title)
             else:
                 return JsonResponse({'message':'That title do not exists'})
             final_serializer = self.serializer_class(tutorials, many=True)
+            cache.set(self.cache_key,final_serializer.data)
             return JsonResponse(final_serializer.data,safe=False)
     
         except Exception as e:
@@ -39,6 +42,7 @@ class TutorialList(generics.ListAPIView):
                 serializer.save()
                 final_tutorial_data = self.get_queryset()
                 final_serializer = self.serializer_class(final_tutorial_data, many=True)
+                cache.set(self.cache_key,final_serializer.data)
                 return JsonResponse(final_serializer.data, status=status.HTTP_201_CREATED, safe=False)
             return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
@@ -49,6 +53,7 @@ class TutorialList(generics.ListAPIView):
     def delete(self, request, *args, **kwargs):
         try:
             count = self.queryset.delete()
+            cache.delete(self.cache_key) # Deleted the cache
             return JsonResponse({'message':'{} Tutorials were deleted successfully!'.format(count[0])})
         
         except Exception as e:

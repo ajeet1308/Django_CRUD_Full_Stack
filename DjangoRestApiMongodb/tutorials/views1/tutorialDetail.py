@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.core.cache import cache
 
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
@@ -15,12 +16,13 @@ from tutorials.serializers import TutorialSerializer
 class TutorialDetail(generics.ListAPIView):
     queryset = Tutorial.objects.all()
     serializer_class = TutorialSerializer
-    
+    cache_key = 'tutorial_list_published'
     
     def get(self, request, *args, **kwargs):
         try:
             tutorial_data = self.queryset.get(pk=kwargs['pk'])
             serializer = self.serializer_class(tutorial_data)
+            cache.set(self.cache_key, serializer.data)
             return JsonResponse(serializer.data)
         except Tutorial.DoesNotExist:
             return JsonResponse({'message':'This article does not exist'})
@@ -33,6 +35,7 @@ class TutorialDetail(generics.ListAPIView):
             count = tutorial_data.delete()
             final_tutorial_data = self.get_queryset()
             serializer = self.serializer_class(final_tutorial_data, many=True)
+            cache.set(self.cache_key, serializer.data)
             return JsonResponse(serializer.data, safe=False)
         
         except Tutorial.DoesNotExist:
@@ -50,6 +53,7 @@ class TutorialDetail(generics.ListAPIView):
                 serializer.save()
                 final_tutorial_data = self.get_queryset()
                 final_serializer = self.serializer_class(final_tutorial_data, many=True)
+                cache.set(self.cache_key,final_serializer.data)
                 return JsonResponse(final_serializer.data, safe=False)
             
             return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
