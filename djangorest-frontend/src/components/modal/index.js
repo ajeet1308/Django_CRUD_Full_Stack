@@ -1,8 +1,8 @@
 import { Fade, Modal, Box, Grid, Divider, Backdrop } from "@mui/material";
 import styled from "@emotion/styled";
 import CloseIcon from "@mui/icons-material/Close";
-import FormGenPut from "../formGenPut";
-import FormGenPost from "../formGenPost";
+import FormGenPost from '../formGenPost'
+import FormGenPut from '../formGenPut'
 
 const CustomBox = styled(Box)(() => ({
   position: "absolute",
